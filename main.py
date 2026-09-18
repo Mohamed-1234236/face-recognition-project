@@ -1,10 +1,11 @@
 import cv2
 import os
 import urllib.request
+import numpy as np  # FIX: Added numpy import for encoding
 import tkinter as tk
 from tkinter import simpledialog
 
-# 1. Get the person's name via a GUI popup box (so terminal isn't needed)
+# 1. Get the person's name via a GUI popup box
 root = tk.Tk()
 root.withdraw()  # Hide main Tkinter window
 name = simpledialog.askstring("Input", "Enter person's name:")
@@ -53,7 +54,16 @@ while True:
         # Save cropped grayscale face
         face = gray[y:y + h, x:x + w]
         filename = os.path.join(dataset_path, f"{count}.jpg")
-        cv2.imwrite(filename, face)
+
+        # FIX: Encode image to memory buffer, then write safely to Arabic file path using numpy
+        try:
+            # Encode image matrix into '.jpg' format byte array
+            _, img_encoded = cv2.imencode('.jpg', face)
+            # Write bytes cleanly into the Unicode file path
+            img_encoded.tofile(filename)
+        except Exception as e:
+            print(f"Error saving image: {e}")
+            count -= 1  # Revert count if saving fails
 
         # Draw bounding box
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)

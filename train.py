@@ -25,7 +25,15 @@ for person_name in os.listdir(dataset_path):
 
     for image_name in os.listdir(person_dir):
         img_path = os.path.join(person_dir, image_name)
-        gray_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+
+        # FIX: Read image from Unicode/Arabic path using numpy instead of cv2.imread
+        try:
+            # Read image file data as a raw byte array
+            img_array = np.fromfile(img_path, np.uint8)
+            # Decode the raw bytes into a grayscale image matrix
+            gray_img = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+        except Exception:
+            continue
 
         if gray_img is None:
             continue
@@ -34,6 +42,10 @@ for person_name in os.listdir(dataset_path):
         ids.append(current_id)
 
     current_id += 1
+
+# Check if we actually found any faces before training
+if len(faces) == 0:
+    raise ValueError("No images were loaded. Ensure your dataset folder has valid images.")
 
 print("Training model...")
 recognizer.train(faces, np.array(ids))
